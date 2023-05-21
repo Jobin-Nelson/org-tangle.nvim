@@ -1,24 +1,21 @@
 local ts_utils = require('nvim-treesitter.ts_utils')
 local lang = 'org'
-local valid_headers = { 'PROPERTY', 'header-args', ':tangle' }
+local valid_headers = { 'header-args', ':tangle' }
 
 local directive_query = vim.treesitter.query.parse(
   lang,
   [[
 (directive
-  (expr) @name (#eq? @name "PROPERTY")
-  (value
-    (expr) @x))
+  name: (expr) @name (#eq? @name "PROPERTY"))
   ]]
 )
 
-local block_query = vim.treesitter.query.parse(
-  lang,
-  [[
-(block
-  parameter: (expr) @x (#match? @x "lisp"))
-  ]]
-)
+local function get_block_query(filetype)
+  return vim.treesitter.query.parse(
+    lang,
+    string.format('(block parameter: (expr) @x (#match? @x "%s"))', filetype)
+  )
+end
 
 local function check_valid_headers(text)
   for idx, header in ipairs(valid_headers) do
@@ -46,18 +43,21 @@ local function get_target_file()
 
   local target_file = ''
   for id, node in directive_query:iter_captures(root, bufnr, 0, -1) do
-    local text = vim.treesitter.get_node_text(node, bufnr)
-    if vim.tbl_isempty(valid_headers) then
-      target_file = text
-      break
+    node = node:next_named_sibling()
+
+    for header in node:iter_children() do
+      local text = vim.treesitter.get_node_text(header, bufnr)
+      if vim.tbl_isempty(valid_headers) then
+        target_file = text
+        break
+      end
+      check_valid_headers(text)
     end
-    check_valid_headers(text)
   end
 
   if target_file == '' then
     error('No target file found from Org headers')
   end
-  vim.print(target_file)
   return target_file
 end
 
@@ -65,12 +65,14 @@ local function create_file(target)
   local target_filetype = vim.filetype.match({ filename = target })
   local bufnr = 4
   local root = get_root(bufnr)
+  local block_query = get_block_query(target_filetype)
 
   local changes = {}
   for id, node in block_query:iter_captures(root, bufnr, 0, -1) do
     local text = vim.treesitter.get_node_text(node:next_named_sibling(), bufnr)
     table.insert(changes, text)
   end
+  vim.print(changes)
 end
 
 create_file(get_target_file())
