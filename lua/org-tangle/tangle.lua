@@ -63,6 +63,9 @@ local function create_file(target, bufnr, root)
   local target_filepath = table.concat({ parent_dir, target }, '/')
 
   local target_file = io.open(target_filepath, 'w')
+  if not target_file then
+    error('Cannot open target file')
+  end
   for _, node in block_query:iter_captures(root, bufnr, 0, -1) do
     local text = vim.treesitter.get_node_text(node:next_named_sibling(), bufnr)
     target_file:write(text, '\n\n')
