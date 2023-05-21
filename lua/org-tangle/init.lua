@@ -66,13 +66,17 @@ local function create_file(target)
   local bufnr = 4
   local root = get_root(bufnr)
   local block_query = get_block_query(target_filetype)
+  local parent_dir = vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr))
+  local target_filepath = table.concat({ parent_dir, target }, '/')
 
-  local changes = {}
+  local target_file = io.open(target_filepath, 'w')
   for id, node in block_query:iter_captures(root, bufnr, 0, -1) do
     local text = vim.treesitter.get_node_text(node:next_named_sibling(), bufnr)
-    table.insert(changes, text)
+    target_file:write(text, '\n\n')
   end
-  vim.print(changes)
+
+  target_file:flush()
+  target_file:close()
 end
 
 create_file(get_target_file())
@@ -84,4 +88,4 @@ create_file(get_target_file())
 -- end
 --
 -- return M
--- lua vim.keymap.set('n', '<leader>r', ':luafile ~/playground/projects/org-tangle.nvim/lua/org-tangle/init.lua<cr>')
+-- lua vim.keymap.set('n', '<leader>r', ':update | luafile ~/playground/projects/org-tangle.nvim/lua/org-tangle/init.lua<cr>')
