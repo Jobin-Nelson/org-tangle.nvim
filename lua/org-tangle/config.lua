@@ -7,7 +7,7 @@ end
 local M = {}
 
 M.setup = function()
-  vim.keymap.set('n', '<leader>oe', require('org-tangle').tangle, { desc = 'Org Export' })
+  vim.keymap.set('n', '<leader>oe', require('org-tangle').tangle, { desc = 'Org Tangle' })
 end
 
 return M
