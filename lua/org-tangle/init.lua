@@ -82,5 +82,9 @@ M.tangle = function()
   create_file(target, bufnr, root)
 end
 
+M.setup = function(_)
+  vim.keymap.set('n', '<leader>oe', require('org-tangle').tangle, { desc = 'Org Tangle' })
+end
+
 return M
 -- lua vim.keymap.set('n', '<leader>r', ':update | luafile ~/playground/projects/org-tangle.nvim/lua/org-tangle/init.lua<cr>')
